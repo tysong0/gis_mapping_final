@@ -1,0 +1,158 @@
+/*set the universal font to be used*/
+body {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/*styling of the title and introduction of the page*/
+#title {
+    background-color: #786143;
+    color: #fff;
+    position: relative;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bolder;
+    padding: 5px;
+}
+
+#content {
+    background-color: rgba(0, 255, 255, 0.466);
+    margin-top: 5px;
+    padding: 20px;
+    margin-left: 0px;
+    margin-right: 8px;
+    position: relative;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.2px);
+    -webkit-backdrop-filter: blur(6.2px);
+    border: 1px solid rgba(255, 255, 255, 0.68);
+}
+
+/*styles of the legends*/
+#legendA {
+    margin-top: 3px;
+    padding-left: 20px;
+    position: relative;
+    text-align: left;
+    font-size: 18px;
+    width: 30%;
+    background: rgba(255, 23, 23, 0.546);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.2px);
+    -webkit-backdrop-filter: blur(6.2px);
+}
+
+#legendB {
+    padding-left: 20px;
+    position: relative;
+    text-align: left;
+    font-size: 18px;
+    width: 30%;
+    background: rgba(255, 170, 72, 0.548);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.2px);
+    -webkit-backdrop-filter: blur(6.2px);
+}
+
+#legendC {
+    padding-left: 20px;
+    position: relative;
+    text-align: left;
+    font-size: 18px;
+    width: 30%;
+    background: rgba(255, 252, 79, 0.42);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.2px);
+    -webkit-backdrop-filter: blur(6.2px);
+}
+
+/*styling the bottom*/
+#fit {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    display: block;
+    position: absolute;
+    bottom: 20px;
+    left: 25%;
+    margin: 0px auto;
+    width: 50%;
+    height: 40px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 17px;
+    text-align: center;
+    color: #fff;
+    /* From https://css.glass */
+    background: rgba(120, 97, 67, 0.70);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(7.8px);
+    -webkit-backdrop-filter: blur(7.8px);
+    border: 1px solid rgba(120, 97, 75, 0.7);
+}
+
+#fit:disabled {
+    pointer-events: none;
+}
+  
+#fit:hover {
+    transform: translate3D(-3px, -4px, 0);
+    cursor: pointer;
+}
+  
+#fit:active {
+    box-shadow: none;
+    transform: translateY(0);
+}
+
+
+#container {
+    position: absolute;
+    max-height: 4096px;
+    height: 100%;
+    max-width: 8192px;
+    width: 100%;
+}
+
+/* Popup styles */
+  .mapboxgl-popup-content {
+    font:
+      400 15px/22px 'Source Sans Pro',
+      'Helvetica Neue',
+      sans-serif;
+    padding: 0px;
+    width: 180px;
+  }
+  
+  .mapboxgl-popup-content h3 {
+    background: #786143;
+    color: #fff;
+    margin: 0;
+    padding: 10px;
+    border-radius: 3px 3px 0 0;
+    font-weight: 700;
+    margin-top: -15px;
+  }
+  
+  .mapboxgl-popup-content h4 {
+    margin: 0;
+    padding: 10px;
+    font-weight: 400;
+  }
+  
+  .mapboxgl-popup-content div {
+    padding: 10px;
+  }
+  
+  .mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+    margin-top: 15px;
+  }
+  
+  .mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+    border-bottom-color: #786143;
+  }
