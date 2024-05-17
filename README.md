@@ -27,6 +27,6 @@ Other dropped features:
 - others
 
 ## Screenshots
-![Overview]([http://url/to/img.png](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Overview.jpg)
-![The isochrone map]([http://url/to/img.png](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Isochrone.jpg)
-![The loading spinner]([http://url/to/img.png](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Loading.jpg)
+![Map overview](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Overview.jpg)
+![The isochrone map](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Isochrone.jpg)
+![The loading spinner](https://github.com/tysong0/gis_mapping_final/blob/main/readme_img/Loading.jpg)
