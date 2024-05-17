@@ -1,150 +1,206 @@
 // Define some variables, including location
-var STARTING_CENTER = [-73.26651, 40.79090]
-var ZOOM_SW = [-74.87235, 40.19620]
-var ZOOM_NE = [-71.66068, 41.38031]
-var hoveredPolygonId = null;
+var STARTING_CENTER = [-73.92960, 40.69906]
+var ZOOM_SW = [-74.57402, 40.45758]
+var ZOOM_NE = [-73.28518, 40.93966]
 // Variables for isochrone
 var aplngLat = null;
 var aplng = 0;
 var aplat = 0;
+
 // Create constants to use in getIso()
 const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
-const profile = 'driving'; // Set the default routing profile
-const minutes = 60; // Set the default duration
-
-
-// Set max zoom out bounds to the US *********
-const bounds = [
-    [-144.75460, 10.14845], // Southwest coordinates
-    [-44.18682, 60.65736] // Northeast coordinates
-];
+const profile = 'driving'; // Set the routing profile for isochrone calculation
+const minutes = 60; // Set the duration of calculating isochrone area
+// zoom threshold for change between state and county population overlay
+const zoomThreshold = 6;
 
 // Introduce the map
-mapboxgl.accessToken = 'pk.eyJ1IjoidGlhbnlzb25nIiwiYSI6ImNsdWx1OGVodzBqcWwyaW9hOW1oaWRnOWwifQ.E4RNl8ESZulQlGSzXECAMw';
+const ACCESS_TOKEN = 'pk.eyJ1IjoidGlhbnlzb25nIiwiYSI6ImNsdWx1OGVodzBqcWwyaW9hOW1oaWRnOWwifQ.E4RNl8ESZulQlGSzXECAMw';
+mapboxgl.accessToken = ACCESS_TOKEN;
 const map = new mapboxgl.Map({
     container: 'container', // container ID
     center: STARTING_CENTER, // starting position [lng, lat]
-    style: 'mapbox://styles/mapbox/outdoors-v12',
-    zoom: 6.13, // starting zoom
-    maxBounds: bounds // Set the map's geographical boundaries
+    style: 'mapbox://styles/mapbox/light-v11',
+    zoom: 10.5, // starting zoom
+    pitch: 50, // initial pitch
 })
 
 // add a navigation control at the bottom right corner
-map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-// search box needed
+map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 // add a scale to the map
 map.addControl(new mapboxgl.ScaleControl());
 
+map.addControl(
+    new mapboxgl.GeolocateControl({
+        positionOptions: {
+            enableHighAccuracy: true
+        },
+        // When active the map will receive updates to the device's location as it changes.
+        trackUserLocation: true,
+        // Draw an arrow next to the location dot to indicate which direction the device is heading.
+        showUserHeading: true
+    })
+);
+
+
 // map load
 map.on('load', () => {
+    // hide the load spinner when load complete
+    document.getElementById("spinner").style.visibility = "hidden";
+    
     map.resize();
-
-    // set css size based on scale *********
-    var scales = map.getZoom() / 10;
 
     // prepare the source to be used by isochrone
     map.addSource('iso', {
         type: 'geojson',
         data: {
-          'type': 'FeatureCollection',
-          'features': []
+            'type': 'FeatureCollection',
+            'features': []
         }
-      });
+    });
 
-    // draw the states
-    map.addSource('states', {
-        "type": "geojson",
-        "data": "data/us_states.geojson"
-    }); 
+    //data source of population overlay, from Mapbox
+    map.addSource('population', {
+        'type': 'vector',
+        'url': 'mapbox://mapbox.660ui7x6'
+    });
 
-    // add a fill layer to the states
-    /* map.addLayer({
-        'id': 'states-fill',
-        'type': 'fill',
-        'source': 'states',
-        'layout': {},
-        'paint': {
-            'fill-color': { // data-driven color styling
-                property: 'count',
-                stops: [[0, '#fff'], [12000, '#f00']] // earthquake count from 0 to 12000, color from #fff to #f00 
+    //state population overlay
+    map.addLayer(
+        {
+            'id': 'state-population',
+            'source': 'population',
+            'source-layer': 'state_county_population_2014_cen',
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'visible'
             },
-            'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                1, // fill color transparency if hovered
-                0.7  // default fill color transparency
-            ]
-        }
-    });
-    */
-
-    /*add a line layer for the states
-    map.addLayer({
-        'id': 'states-line',
-        'type': 'line',
-        'source': 'states',
-        'layout': {},
-        'paint': {
-            'line-color': '#000',
-            'line-width': 1.5
-        }
-    }, 'path-pedestrian-label');
-    */
-
-    /*
-    // When the user moves their mouse over the state-fill layer, update the feature state for the feature under the mouse.
-    map.on('mousemove', 'states-fill', (e) => {
-        if (e.features.length > 0) {
-            if (hoveredPolygonId !== null) {
-                map.setFeatureState(
-                    { source: 'states', id: hoveredPolygonId },
-                    { hover: false }
-                );
+            'maxzoom': zoomThreshold,
+            'type': 'fill',
+            // only include features for which the "isState"
+            // property is "true"
+            'filter': ['==', 'isState', true],
+            'paint': {
+                'fill-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'population'],
+                    0,
+                    '#ffffff',
+                    500000,
+                    '#f0f0f0',
+                    750000,
+                    '#d9d9d9',
+                    1000000,
+                    '#bdbdbd',
+                    2500000,
+                    '#969696',
+                    5000000,
+                    '#737373',
+                    7500000,
+                    '#525252',
+                    10000000,
+                    '#252525',
+                    25000000,
+                    '#000000'
+                ],
+                'fill-opacity': 0.4
             }
-            hoveredPolygonId = e.features[0].id;
-            map.setFeatureState(
-                { source: 'states', id: hoveredPolygonId },
-                { hover: true }
-            );
+        },
+        'road-label-simple' // Add layer below labels
+    );
+
+    //county population overlay
+    map.addLayer(
+        {
+            'id': 'county-population',
+            'source': 'population',
+            'source-layer': 'state_county_population_2014_cen',
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'visible'
+            },
+            'minzoom': zoomThreshold,
+            'type': 'fill',
+            // only include features for which the "isCounty"
+            // property is "true"
+            'filter': ['==', 'isCounty', true],
+            'paint': {
+                'fill-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'population'],
+                    0,
+                    '#ffffff',
+                    100,
+                    '#f0f0f0',
+                    1000,
+                    '#d9d9d9',
+                    5000,
+                    '#bdbdbd',
+                    10000,
+                    '#969696',
+                    50000,
+                    '#737373',
+                    100000,
+                    '#525252',
+                    500000,
+                    '#252525',
+                    1000000,
+                    '#000000'
+                ],
+                'fill-opacity': 0.4
+            }
+        },
+        'road-label-simple' // Add layer below labels
+    );
+
+    // toggle the visibility of the legends on zoom
+    const stateLegendEl = document.getElementById('state-legend');
+    const countyLegendEl = document.getElementById('county-legend');
+    map.on('zoom', () => {
+        // zoom away, legend for state population; zoom in, county population
+        if (map.getZoom() > zoomThreshold) {
+            stateLegendEl.style.display = 'none';
+            countyLegendEl.style.display = 'block';
+        } else {
+            stateLegendEl.style.display = 'block';
+            countyLegendEl.style.display = 'none';
         }
     });
 
-    // When the mouse leaves the state-fill layer, update the feature state of the
-    // previously hovered feature.
-    map.on('mouseleave', 'states-fill', () => {
-        if (hoveredPolygonId !== null) {
-            map.setFeatureState(
-                { source: 'states', id: hoveredPolygonId },
-                { hover: false }
-            );
-        }
-        hoveredPolygonId = null;
-    });
-    */
-
-    //iterate
+    //iterate for the airport database
     airports.forEach(function (airport) {
 
-        var type = airport.type;
+        var type = airport.type
+        var airportlat = airport.latitude_deg
+        var airportlng = airport.longitude_deg
         var colour;
+        var scales;
         //var utcDate = `${earthquakerecord.time}`;  // ISO-8601 formatted date returned from the original dataset
         //var localDate = moment(utcDate).format('LL'); // Display in local time, using the moment.js
         var coordinates = [airport.longitude_deg, airport.latitude_deg];
+        var typeentry = null;
 
         //set the color of the markers
         // If it's an medium airport
         if (type === "medium_airport") {
-            colour = "orange";
+            colour = "#659fa6";
+            scales = 0.6;
+            typeentry = "🧳 Medium Airport"
 
             // If it's a major airport
         } else if (type === "large_airport") {
-            colour = "red";
+            colour = "#0ac4ab";
+            scales = 1.1;
+            typeentry = "🛂 Major Airport"
 
             // If it's a small airport
         } else {
-            colour = "grey";
+            colour = "#a6a6a6";
+            scales = 0.4;
+            typeentry = "🛩 Small Airport/Heliport"
         }
 
         //create popup incl. ap info and stick them on the markers on click
@@ -156,7 +212,7 @@ map.on('load', () => {
             closeOnClick: false
             */
         }).setHTML(
-            `<h3> Airport </h3><h4> <b> ${airport.name} </b> </h4>`
+            `<h3> ${typeentry} </h3><h4> <b> ✈ ${airport.name} </b> <br> Airport IATA code: <b>${airport.iata_code}</b> <br> Serving the city of <b>${airport.municipality}</b> </h4> `
         );
 
         //create the markers
@@ -168,19 +224,40 @@ map.on('load', () => {
             .setPopup(popup)
             .addTo(map);
         const markerDiv = marker.getElement();
+
         /*
         markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
         markerDiv.addEventListener('mouseleave', () => marker.togglePopup());
         */
-        
+
+
         //get latlng of the airport on click and draw isochrone area
         markerDiv.addEventListener('click', () => {
-            //get latlng
+
+            // remove other isochrone areas
+            if (map.getLayer('isoLayer')) {
+                map.removeLayer('isoLayer');
+            }
+
+            // get latlng
             var aplngLat = marker.getLngLat()
+
+            // lock interaction while loading
+            map.dragPan.disable();
+            map.scrollZoom.disable();
+            map.keyboard.disable();
+
+            // pull out the load spinner
+            document.getElementById("spinner").style.visibility = "visible";
+
+            // read the airport coordinate
             var aplng = aplngLat['lng']
-            console.log(aplngLat['lat'])    //check that the coordinates being printed correctly
-            console.log(aplngLat['lng'])    //check that the coordinates being printed correctly
             var aplat = aplngLat['lat'];
+
+            /* console.log(aplngLat['lat'])    //check that the coordinates being printed correctly, debug
+            console.log(aplngLat['lng'])    //check that the coordinates being printed correctly
+            */
+
             // Create a function that sets up the Isochrone API query then makes an fetch call
             async function getIso() {
                 const query = await fetch(
@@ -188,68 +265,123 @@ map.on('load', () => {
                     { method: 'GET' }
                 );
                 const data = await query.json();
-                console.log(data);            
+                /*
+                console.log(data); //debug code to check the isochrone api response
+                */
                 map.getSource('iso').setData(data);
             }
+
+
             //draw the isochrone area
-              map.addLayer(
+            map.addLayer(
                 {
-                  'id': 'isoLayer',
-                  'type': 'fill',
-                  'source': 'iso',
-                  'layout': {},
-                  'paint': {
-                    'fill-color': '#5a3fc0',
-                    'fill-opacity': 0.3
-                  }
+                    'id': 'isoLayer',
+                    'type': 'fill',
+                    'source': 'iso',
+                    'layout': {},
+                    'paint': {
+                        'fill-color': '#3ebea3',
+                        'fill-opacity': 0.7,  // default fill color transparency
+                    }
                 },
                 'poi-label'
-              );
-        
-              // Make the API call
-              getIso();
+            );
 
+            // remove existing popups
+            const popups = document.getElementsByClassName("mapboxgl-popup");
+            if (popups.length) {
+                popups[0].remove();
+            }
+
+            // whenever the load finishes, do the rest
+            map.once('sourcedataloading', () => {
+                /*
+                console.log('A sourcedataloading event occurred.'); //debug code detecting load complete
+                */
+
+                document.getElementById("spinner").style.visibility = "hidden"; // hide the loading spinner
+
+                // enable interactions after load
+                map.dragPan.enable();
+                map.scrollZoom.enable();
+                map.keyboard.enable();
+
+                // finally, fly to the airport
+                map.flyTo({
+                    center: aplngLat,
+                    zoom: 8.5,
+                    pitch: 50,
+                    essential: true,
+                });
+            });
+
+            // Make the API call
+            getIso();
         })
+
     })
 
-
-
-    /* Define the function of the zoom button */
+    // Define the function of the zoom button 
     document.getElementById('fit').addEventListener('click', () => {
-        map.fitBounds([
-            ZOOM_SW, // southwestern corner of the bounds
-            ZOOM_NE // northeastern corner of the bounds
-        ]);
+        // remove existing popups
+        const popups = document.getElementsByClassName("mapboxgl-popup");
+        if (popups.length) {
+            popups[0].remove();
+        }
+        //reset camera position
+        map.flyTo({
+            zoom: 7.5,
+            pitch: 50,
+            essential: true // this animation is considered essential with respect to prefers-reduced-motion
+        });
+        // clear existing isochrone area
+        if (map.getLayer('isoLayer')) {
+            map.removeLayer('isoLayer');
+        }
+
     });
 
-    // When a click event occurs on a feature in the states layer,
-    // open a popup at the location of the click, with description
-    // HTML from the click event's properties
-    map.on('click', 'states-fill', (e) => {
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`<h3> State profile: </h3><h4> In <b> ${e.features[0].properties.name} </b>, <b>${e.features[0].properties.count}</b> earthquakes happened during 1638 to 1985. </h4>`)
-            .addTo(map);
-    });
 
-    /*map.on('click', 'states-fill', (e) => {
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`<h3> State profile: </h3><h4> In <b> ${e.features[0].properties.name} </b>, <b>${e.features[0].properties.count}</b> earthquakes happened during 1638 to 1985. </h4>`)
-            .addTo(map);
-    });
-    */
+    // Define the function of the toggle population switch
+    const checkbox = document.getElementById("slid");
+    checkbox.addEventListener("change", () => {
 
-    // Change the cursor to a pointer when
-    // the mouse is over the states layer
-    map.on('mouseenter', 'states-fill', () => {
-        map.getCanvas().style.cursor = 'pointer';
-    });
+        // Toggle the visibility status of population layers
+        if (checkbox.checked == true) {
+            map.setLayoutProperty('county-population', 'visibility', 'visible');
+        } else {
+            map.setLayoutProperty(
+                'county-population',
+                'visibility',
+                'none'
+            );
+        };
 
-    // Change the cursor back to a pointer
-    // when it leaves the states layer
-    map.on('mouseleave', 'states-fill', () => {
-        map.getCanvas().style.cursor = '';
+        if (checkbox.checked == true) {
+            map.setLayoutProperty('state-population', 'visibility', 'visible');
+        } else {
+            map.setLayoutProperty(
+                'state-population',
+                'visibility',
+                'none'
+            );
+        };
+
+        // Get the visibility status of the legend
+        const stateLegendEl = document.getElementById('state-legend');
+        const countyLegendEl = document.getElementById('county-legend');
+        // Toggle the visibility status of the legend
+        if (checkbox.checked == true) {
+            countyLegendEl.style.visibility = 'visible';
+        } else {
+            countyLegendEl.style.visibility = 'hidden';
+        };
+
+        if (checkbox.checked == true) {
+            stateLegendEl.style.visibility = 'visible';
+        } else {
+            stateLegendEl.style.visibility = 'hidden';
+        };
     });
 
 });

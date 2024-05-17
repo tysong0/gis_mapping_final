@@ -3,30 +3,90 @@
 
 <head>
     <meta charset="utf-8">
-    <title>The earthquake map</title>
+    <title>US airport isochrone and population map</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
 </head>
 
 <!--Body of the webpage-->
+
 <body>
     <div id="container"></div>
-    <div id="title">The earthquake map of this week</div>
-    <div id="content">Do you know how many earthquakes happened in/near the US just for the last week? <br> Individual earthquakes are displayed as markers while states are colored by their relative earthquake dangerousity - with deeper red means higher danger. <br> <b><i>Zoom out</i></b> and <b><i>hover on</i></b> the markers to explore when these quakes happened and their magnitudes. <i>(Only earthquakes > M2.5 are displayed)</i> <br> <b><i>Click on</i></b> states to learn how many earthquakes have occured there historically.</div>
-    <div id="legendA">Red = Quakes stronger than M5.0</div>
-    <div id="legendB">Orange = Quakes between M4.0 and M5.0</div>
-    <div id="legendC">Yellow = Quakes weaker than M4.0</div>
-    <br>
-    <button id="fit">Get back to where we are - NYC</button>
+
+    <!--The load spinner-->
+    <div id="spinner"></div>
+
+    <!--The side pannel-->
+    <div class="panel">
+        <div id="title">Airports and population of US</div>
+        <div id="content">Travel by air is the default option for many to get accross the country whenever car rides
+            seem to far. <br>
+            In this interactive map, the location of major US airports with scheduled service is mapped out, together
+            with the county/state population. <br><br>
+            <b><i>Zoom out</i></b> and <b><i>click on</i></b> the markers to explore these ports to the air and their
+            service coverage area, displayed in cyan-blue. <i>(Measured by 1 hour of driving)</i> <br>
+            You can reset selected airport by <b><i>click on</i></b> the Reset selection bar and clear the isochrone
+            area drawn. <br>
+            Also, feel free to use <b><i> the location function </i></b> to the top right to pin your location on this map. 
+            Is you home or workplace within one hour driving distance to one of these airports? <br> <br>
+            <div class='box cyan'> indicates major airports.</div>
+            <div class='box blue'> indicates medium airports.</div>
+            <div class='box grey'> indicates small regional airports.</div> <br>
+            The population information is displayed as an overlay layer. Zoom closer, you will see population at county
+            level. Zoom out, it will be replaced by state population.
+            Use <b><i> the toggle </i></b> below to turn off / back on the population overlay as you wish.
+                    <!-- the switch -->
+                    <div><label class="switch">
+                    <input type="checkbox" id="slid" checked>
+                    <span class="slider"><div id="slide_note">Toggle the population overlay</div> </span>
+                </label> </div>
+            
+        </div>
+
+
+
+    </div>
+
+    <!-- the bottom bar -->
+    <button id="fit">Reset selection</button>
+
+    <!-- the legends -->
+    <div id="state-legend" class="legend">
+        <h4>Population</h4>
+        <div><span style="background-color: #000000"></span>25,000,000</div>
+        <div><span style="background-color: #252525"></span>10,000,000</div>
+        <div><span style="background-color: #525252"></span>7,500,000</div>
+        <div><span style="background-color: #737373"></span>5,000,000</div>
+        <div><span style="background-color: #969696"></span>2,500,000</div>
+        <div><span style="background-color: #bdbdbd"></span>1,000,000</div>
+        <div><span style="background-color: #d9d9d9"></span>750,000</div>
+        <div><span style="background-color: #f0f0f0"></span>500,000</div>
+        <div><span style="background-color: #ffffff"></span>0</div>
+    </div>
+
+    <div id="county-legend" class="legend" style="display: none">
+        <h4>Population</h4>
+        <div><span style="background-color: #000000"></span>1,000,000</div>
+        <div><span style="background-color: #252525"></span>500,000</div>
+        <div><span style="background-color: #525252"></span>100,000</div>
+        <div><span style="background-color: #737373"></span>50,000</div>
+        <div><span style="background-color: #969696"></span>10,000</div>
+        <div><span style="background-color: #bdbdbd"></span>5,000</div>
+        <div><span style="background-color: #d9d9d9"></span>1,000</div>
+        <div><span style="background-color: #f0f0f0"></span>100</div>
+        <div><span style="background-color: #ffffff"></span>0</div>
+    </div>
+
 </body>
 
 <!--Introducing the js to be used-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 <script src="data/airport.js"></script> <!--json of airport lib-->
-<script src="js/1wearthquake.js"></script> <!--json of earthquake lib-->
-<script src="js/moment.js"></script> <!--js to format raw time stamps-->
 <script src="js/scripts.js"></script> <!--main js lib-->
+<script src="https://api.mapbox.com/search-js/v1.0.0-beta.21/web.js"></script>
 <!--temprarily redundant js file
     <script src="js/quakecount.js"></script>
 -->

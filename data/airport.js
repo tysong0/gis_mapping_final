@@ -5126,7 +5126,7 @@ var airports = [
   {
     "ident": "KMSP",
     "type": "large_airport",
-    "name": "Minneapolis?�?Saint Paul International Airport / Wold?�?Chamberlain Field",
+    "name": "Minneapolis Saint Paul International Airport",
     "latitude_deg": 44.880081,
     "longitude_deg": -93.221741,
     "elevation_ft": 841,
